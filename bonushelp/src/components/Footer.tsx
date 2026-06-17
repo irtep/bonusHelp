@@ -10,7 +10,7 @@ const Footer: React.FC = (): React.ReactElement => {
       margin: 10
     }}>
       <p>
-        Version: 1.1.0
+        Version: 1.2.1
       </p>
     </div>
   );

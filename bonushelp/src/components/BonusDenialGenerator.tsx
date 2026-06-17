@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { phrasePool } from '../data/phrasePool';
 
 // --- TYPES & INTERFACES ---
-export type Language = 'fi' | 'en';
+export type Language = 'fi' | 'en' | 'no';
+type SignatureStyle = 'none' | 'standard' | 'brandVip';
 //type Brand = 'pelipeto' | 'casinofriday' | 'shotz';
 type Brand = string;
 
@@ -12,6 +13,7 @@ export const BonusDenialGenerator: React.FC = () => {
   const [brand, setBrand] = useState<Brand>('');
   const [agentName, setAgentName] = useState<string>('');
   const [generatedText, setGeneratedText] = useState<string>('');
+  const [sigStyle, setSigStyle] = useState<SignatureStyle>('standard');
 
   // --- HELPER FUNCTION ---
   const getRandomElement = <T,>(arr: T[]): T => {
@@ -33,20 +35,34 @@ export const BonusDenialGenerator: React.FC = () => {
     const closing = includeClosing ? getRandomElement(pool.closings) : '';
 
     // Determine team signature text based on language
-    const vipTeamText = lang === 'fi' ? 'VIP-tiimi' : 'VIP team';
+    const vipTeamText = lang === 'fi' ? 'VIP-tiimi' : lang === 'no' ? 'VIP-team' : 'VIP team';
 
     // Capitalize brand name nicely for display
     const formattedBrand = brand.charAt(0).toUpperCase() + brand.slice(1);
 
-    // Assemble the template
-    // Constructing with proper line breaks
+    // Assemble the baseline message template
     let message = `${greeting},\n\n${opening} ${main}`;
 
     if (closing) {
       message += ` ${closing}`;
     }
 
-    message += `\n\n${signoff}\n${agentName ? agentName + '\n' : ''}${formattedBrand} ${vipTeamText}`;
+    // --- CONSTRUCT THE SIGNATURE ---
+    if (sigStyle === 'none') {
+      // Option 1: No signoff or signature details at all
+      // (If you still want the signoff text like "Best regards," but no names, remove signoff from here)
+    } else {
+      // Add the signoff text (e.g., "Ystävällisin terveisin,")
+      message += `\n\n${signoff}`;
+
+      if (sigStyle === 'standard') {
+        // Option 2: Name + Brand VIP-tiimi
+        message += `\n${agentName ? agentName + '\n' : ''}${formattedBrand} ${vipTeamText}`;
+      } else if (sigStyle === 'brandVip') {
+        // Option 3: Name + Brand VIP
+        message += `\n${agentName ? agentName + '\n' : ''}${formattedBrand} VIP`;
+      }
+    }
 
     setGeneratedText(message);
   };
@@ -71,8 +87,9 @@ export const BonusDenialGenerator: React.FC = () => {
           {lang === 'fi' ? 'Valitse kieli:' : 'Select Language:'}
         </label>
         <select value={lang} onChange={(e) => setLang(e.target.value as Language)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white' }}>
-          <option value="fi">Suomi (Finnish)</option>
+          <option value="fi">Finnish</option>
           <option value="en">English</option>
+          <option value="no">Norwegian</option>
         </select>
       </div>
 
@@ -110,6 +127,28 @@ export const BonusDenialGenerator: React.FC = () => {
           placeholder={lang === 'fi' ? 'Kirjoita nimesi tähän' : 'Type your name here'}
           style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc', background: 'black', color: 'white' }}
         />
+      </div>
+
+      {/* Signature Style Selection */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'gold' }}>
+          {lang === 'fi' ? 'Allekirjoituksen tyyli:' : lang === 'no' ? 'Signaturstil:' : 'Signature Style:'}
+        </label>
+        <select
+          value={sigStyle}
+          onChange={(e) => setSigStyle(e.target.value as SignatureStyle)}
+          style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white', border: '1px solid #444' }}
+        >
+          <option value="standard">
+            {lang === 'fi' ? 'Normaali (Nimi & Tiimi)' : lang === 'no' ? 'Standard (Navn & Team)' : 'Standard (Name & Team)'}
+          </option>
+          <option value="brandVip">
+            {lang === 'fi' ? 'Vain VIP (Nimi & Brand VIP)' : lang === 'no' ? 'Kun VIP (Navn & Brand VIP)' : 'Brand VIP Only'}
+          </option>
+          <option value="none">
+            {lang === 'fi' ? 'Ei allekirjoitusta' : lang === 'no' ? 'Ingen signatur' : 'No Signature'}
+          </option>
+        </select>
       </div>
 
       {/* Generate Button */}

@@ -2,28 +2,39 @@ import React from 'react';
 
 interface HeaderProps {
   mode: string;
-  setMode: (mode: 'bonusDenialGenerator' | 'bonusAddedGenerator') => void;
+  setMode: (mode: 'bonusDenialGenerator' | 'bonusAddedGenerator' | 'gwBonusOk') => void;
 }
 
-
-const Header: React.FC<HeaderProps> = ({setMode}): React.ReactElement => {
+const Header: React.FC<HeaderProps> = ({ setMode }): React.ReactElement => {
 
   return (
     <div style={{
       background: "rgb(30,30,30)",
       color: "gold",
       borderRadius: 2,
-      margin: 10
+      margin: 10,
+      textAlign: "center"
     }}>
+
       <button
-        onClick={ () => { setMode("bonusDenialGenerator")}}
+        style={{ margin: 5, background: 'blue', color: 'white' }}
+        onClick={() => { setMode("bonusDenialGenerator") }}
       >
         Bonus Denial Generator
       </button>
+
       <button
-        onClick={ () => { setMode("bonusAddedGenerator")}}
+        style={{ margin: 5, background: 'yellow' }}
+        onClick={() => { setMode("bonusAddedGenerator") }}
       >
-        Bonus Added Generator
+        Bonus Campaign Generator
+      </button>
+
+      <button
+        style={{ margin: 5, background: 'green' }}
+        onClick={() => { setMode("gwBonusOk") }}
+      >
+        GW bonus granted when asked generator
       </button>
     </div>
   );
