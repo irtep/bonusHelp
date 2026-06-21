@@ -42,7 +42,7 @@ export const BonusAddedGenerator: React.FC = () => {
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '1.5rem', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'gold' }}>
-        {lang === 'fi' ? 'Bonus Lisätty -Generaattori' : 'Bonus Added Generator'}
+        {lang === 'fi' ? 'Bonus Campaign gene' : 'Bonus Campaign gene'}
       </h2>
 
       {/* Language Selection */}
