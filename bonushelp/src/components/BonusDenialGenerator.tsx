@@ -78,7 +78,7 @@ export const BonusDenialGenerator: React.FC = () => {
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '1.5rem', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'gold' }}>
-        {lang === 'fi' ? 'Bonusvastaus Generaattori' : 'Bonus Response Generator'}
+        {lang === 'fi' ? 'Ei GW Generaattori' : 'No GW Generator'}
       </h2>
 
       {/* Language Selection */}

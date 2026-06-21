@@ -55,7 +55,7 @@ export const BonusGrantedManual: React.FC = () => {
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '1.5rem', fontFamily: 'sans-serif', border: '1px solid #ccc', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'green' }}>
-        {lang === 'fi' ? 'Bonus Myönnetty -Generaattori' : lang === 'no' ? 'Bonus Innvilget -Generator' : 'Bonus Granted Generator'}
+        {lang === 'fi' ? 'GW Myönnetty -Generaattori' : lang === 'no' ? 'GW Innvilget -Generator' : 'Gw Granted Generator'}
       </h2>
 
       {/* Language Selection */}
