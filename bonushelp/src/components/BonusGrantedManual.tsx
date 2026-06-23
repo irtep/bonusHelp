@@ -3,8 +3,11 @@ import { phrasePoolGranted } from '../data/phrasePool';
 
 type Language = 'fi' | 'en' | 'no';
 type SignatureStyle = 'none' | 'standard' | 'brandVip';
+interface LocalProps {
+  setMsg: (msg: string) => void;
+};
 
-export const BonusGrantedManual: React.FC = () => {
+export const BonusGrantedManual: React.FC<LocalProps> = ( {setMsg} ) => {
   const [lang, setLang] = useState<Language>('fi');
   const [sigStyle, setSigStyle] = useState<SignatureStyle>('standard');
   const [brand, setBrand] = useState<string>('');
@@ -48,7 +51,10 @@ export const BonusGrantedManual: React.FC = () => {
   const handleCopyToClipboard = () => {
     if (generatedText) {
       navigator.clipboard.writeText(generatedText);
-      alert(lang === 'fi' ? 'Kopioitu leikepöydälle!' : lang === 'no' ? 'Kopiert til utklippstavle!' : 'Copied to clipboard!');
+      setMsg(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
+      setTimeout( () => {
+        setMsg('');
+      }, 5000);
     }
   };
 

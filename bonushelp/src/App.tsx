@@ -11,36 +11,37 @@ export type Modes = 'bonusDenialGenerator' | 'bonusAddedGenerator' | 'gwBonusOk'
 
 function App() {
   const [mode, setMode] = useState<Modes>('bonusDenialGenerator');
+  const [msg, setMsg] = useState<string>('');
 
   return (
     <>
-      <Header mode={mode} setMode={setMode} />
+      <Header mode={mode} setMode={setMode} msg={msg} />
 
       {/* This new wrapper div forces everything inside it to sit side-by-side */}
       <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'flex-start' }}>
         {
-          (mode === 'bonusDenialGenerator') && <BonusDenialGenerator />
+          (mode === 'bonusDenialGenerator') && <BonusDenialGenerator setMsg={setMsg} />
         }
         {
-          (mode === 'bonusAddedGenerator') && <BonusAddedGenerator />
+          (mode === 'bonusAddedGenerator') && <BonusAddedGenerator setMsg={setMsg} />
         }
         {
-          (mode === 'gwBonusOk') && <BonusGrantedManual />
+          (mode === 'gwBonusOk') && <BonusGrantedManual setMsg={setMsg} />
         }
         {
           (mode === 'responses') && (
             <>
-              <BonusDenialGenerator />
-              <BonusGrantedManual />
+              <BonusDenialGenerator setMsg={setMsg} />
+              <BonusGrantedManual setMsg={setMsg} />
             </>
           )
         }
         {
           (mode === 'all') && (
             <>
-              <BonusDenialGenerator />
-              <BonusGrantedManual />
-              <BonusAddedGenerator />
+              <BonusDenialGenerator setMsg={setMsg} />
+              <BonusGrantedManual setMsg={setMsg} />
+              <BonusAddedGenerator setMsg={setMsg} />
             </>
           )
         }

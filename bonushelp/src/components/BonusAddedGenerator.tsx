@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import type { Language } from './BonusDenialGenerator';
 import { phrasePoolCampaign, type Theme } from '../data/phrasePool';
 
-export const BonusAddedGenerator: React.FC = () => {
+interface LocalProps {
+  setMsg: (msg: string) => void;
+};
+
+export const BonusAddedGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
   const [lang, setLang] = useState<Language>('fi');
   const [theme, setTheme] = useState<Theme>('monday');
   const [brand, setBrand] = useState<string>('');
@@ -35,7 +39,10 @@ export const BonusAddedGenerator: React.FC = () => {
   const handleCopyToClipboard = () => {
     if (generatedText) {
       navigator.clipboard.writeText(generatedText);
-      alert(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
+      setMsg(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
+      setTimeout( () => {
+        setMsg('');
+      }, 5000);
     }
   };
 

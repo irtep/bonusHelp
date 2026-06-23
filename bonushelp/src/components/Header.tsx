@@ -5,9 +5,10 @@ import type { Modes } from '../App';
 interface HeaderProps {
   mode: string;
   setMode: (mode: Modes) => void;
+  msg: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ setMode }): React.ReactElement => {
+const Header: React.FC<HeaderProps> = ({ setMode, msg }): React.ReactElement => {
 
   return (
     <div style={{
@@ -55,6 +56,11 @@ const Header: React.FC<HeaderProps> = ({ setMode }): React.ReactElement => {
 		  </button>
         </div>
         <WorldClock/>
+		<div>
+			<p style={{background: 'red', color: 'white'}}>
+				{msg}
+			</p>	
+		</div>
     </div>
   );
 }
