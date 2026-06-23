@@ -6,8 +6,11 @@ export type Language = 'fi' | 'en' | 'no';
 type SignatureStyle = 'none' | 'standard' | 'brandVip';
 //type Brand = 'pelipeto' | 'casinofriday' | 'shotz';
 type Brand = string;
+interface LocalProps {
+  setMsg: (msg: string) => void;
+};
 
-export const BonusDenialGenerator: React.FC = () => {
+export const BonusDenialGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
   // --- STATE ---
   const [lang, setLang] = useState<Language>('en');
   const [brand, setBrand] = useState<Brand>('');
@@ -70,7 +73,10 @@ export const BonusDenialGenerator: React.FC = () => {
   const handleCopyToClipboard = () => {
     if (generatedText) {
       navigator.clipboard.writeText(generatedText);
-      alert(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
+      setMsg(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
+      setTimeout( () => {
+        setMsg('');
+      }, 5000);
     }
   };
 
