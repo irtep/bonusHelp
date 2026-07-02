@@ -73,6 +73,7 @@ export const BonusAddedGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
           <option value="monday">{lang === 'fi' ? 'Maanantai (Monday)' : 'Monday'}</option>
           <option value="tuesday">{lang === 'fi' ? 'Tiistai (Tuesday)' : 'Tuesday'}</option>
           <option value="wednesday">{lang === 'fi' ? 'Keskiviikko (Wednesday)' : 'Wednesday'}</option>
+          <option value="thursday">{lang === 'fi' ? 'Torstai (Thursday)' : 'Thursday'}</option>
           <option value="friday">{lang === 'fi' ? 'Perjantai (Friday)' : 'Friday'}</option>
           <option value="juhannus">{lang === 'fi' ? 'Juhannus (Midsummer)' : 'Midsummer'}</option>
           <option value="christmas">{lang === 'fi' ? 'Joulu (Christmas)' : 'Christmas'}</option>

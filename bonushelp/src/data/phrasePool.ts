@@ -16,7 +16,7 @@ export interface ThemePhrases {
 }
 
 // for campaign
-export type Theme = 'monday' | 'tuesday' | 'wednesday' | 'friday' | 'juhannus' | 'christmas';
+export type Theme = 'monday' | 'tuesday' | 'wednesday' | 'thursday' |'friday' | 'juhannus' | 'christmas';
 
 // for bonus deny
 export interface PhrasePool {
@@ -207,6 +207,16 @@ export const phrasePoolCampaign: Record<Language, PhrasePoolCampaign> = {
           'Toivottavasti loppuviikko häämöttää jo mukavissa tunnelmissa!'
         ]
       },
+      thursday: {
+        openings: [
+          'Toivottavasti torstaisi sujuu mukavissa merkeissä!',
+          'Hyvää torstaita! Viikonloppu häämöttää jo aivan nurkan takana.',
+          'Toivottavasti loppuviikkosi on käynnistynyt loistavasti!',
+          'Torstaitervehdys sinne! Toivottavasti päiväsi on ollut onnistunut.',
+          'Toivottavasti viikkosi on sujunut tähän asti mukavasti!',
+          'Perjantai on jo melkein täällä, mukavaa torstaipäivää sinne!'
+        ]
+      },
       friday: {
         openings: [
           'Ihanaa perjantaita ja alkavaa viikonloppua!',
@@ -304,6 +314,16 @@ export const phrasePoolCampaign: Record<Language, PhrasePoolCampaign> = {
           'I hope the rest of the week looks bright for you!'
         ]
       },
+      thursday: {
+        openings: [
+          'I hope your Thursday is going beautifully!',
+          'Happy Thursday! The weekend is just right around the corner.',
+          'I hope you are having a wonderful and productive Thursday!',
+          'Thursday greetings! Hope your day is turning out awesome.',
+          'I hope your week has been treating you well so far!',
+          'The weekend is almost here, hope you have a great day ahead!'
+        ]
+      },
       friday: {
         openings: [
           'Have a wonderful Friday and an amazing weekend ahead!',
@@ -399,6 +419,16 @@ export const phrasePoolCampaign: Record<Language, PhrasePoolCampaign> = {
           'Håper lillelørdagen din blir både avslappende og fin!',
           'Onsdagshilsen herfra! Håper dagen din har vært god.',
           'Håper resten av uken allerede skimtes i koselige former!'
+        ]
+      },
+      thursday: {
+        openings: [
+          'Håper torsdagen din forløper på en utmerket måte!',
+          'God torsdag! Helgen hinker like rundt hjørnet nå.',
+          'Håper du har hatt en kjempefin lopp uke så langt!',
+          'Torsdagshilsen herfra! Håper dagen din har vært helt topp.',
+          'Håper uken din har behandlet deg bra så langt!',
+          'Helgen er nesten her, håper du får en strålende torsdag videre!'
         ]
       },
       friday: {
