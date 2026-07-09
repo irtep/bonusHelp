@@ -6,6 +6,12 @@ interface LocalProps {
   setMsg: (msg: string) => void;
 };
 
+/*
+*
+*       THIS IS FOR CAMPAIGN BONUS 
+* 
+*/
+
 export const BonusAddedGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
   const [lang, setLang] = useState<Language>('fi');
   const [theme, setTheme] = useState<Theme>('monday');
