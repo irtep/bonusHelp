@@ -10,13 +10,19 @@ interface LocalProps {
   setMsg: (msg: string) => void;
 };
 
-export const BonusDenialGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
+export const BonusDenialGenerator: React.FC<LocalProps> = ({ setMsg }) => {
   // --- STATE ---
   const [lang, setLang] = useState<Language>('en');
   const [brand, setBrand] = useState<Brand>('');
   const [agentName, setAgentName] = useState<string>('');
   const [generatedText, setGeneratedText] = useState<string>('');
   const [sigStyle, setSigStyle] = useState<SignatureStyle>('standard');
+  // Dropdown toggle states
+  const [overrideGreeting, setOverrideGreeting] = useState<boolean>(false);
+  const [selectedGreeting, setSelectedGreeting] = useState<string>('');
+
+  const [overrideSignoff, setOverrideSignoff] = useState<boolean>(false);
+  const [selectedSignoff, setSelectedSignoff] = useState<string>('');
 
   // --- HELPER FUNCTION ---
   const getRandomElement = <T,>(arr: T[]): T => {
@@ -27,11 +33,20 @@ export const BonusDenialGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
   const handleGenerate = () => {
     const pool = phrasePool[lang];
 
+    // --- GREETING LOGIC ---
+    // Use manual selection if toggled AND specified, otherwise pick a random one
+    const greeting = (overrideGreeting && selectedGreeting)
+      ? selectedGreeting
+      : getRandomElement(pool.greetings);
+
+    // --- SIGNOFF LOGIC ---
+    const signoff = (overrideSignoff && selectedSignoff)
+      ? selectedSignoff
+      : getRandomElement(pool.signoffs);
+
     // Pick random components
-    const greeting = getRandomElement(pool.greetings);
     const opening = getRandomElement(pool.openings);
     const main = getRandomElement(pool.mainParts);
-    const signoff = getRandomElement(pool.signoffs);
 
     // 50% chance to include or exclude the optional closing part
     const includeClosing = Math.random() > 0.5;
@@ -74,7 +89,7 @@ export const BonusDenialGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
     if (generatedText) {
       navigator.clipboard.writeText(generatedText);
       setMsg(lang === 'fi' ? 'Kopioitu leikepöydälle!' : 'Copied to clipboard!');
-      setTimeout( () => {
+      setTimeout(() => {
         setMsg('');
       }, 5000);
     }
@@ -155,6 +170,77 @@ export const BonusDenialGenerator: React.FC<LocalProps> = ( {setMsg} ) => {
             {lang === 'fi' ? 'Ei allekirjoitusta' : lang === 'no' ? 'Ingen signatur' : 'No Signature'}
           </option>
         </select>
+      </div>
+
+      {/* Manual Greeting Selection */}
+      <div style={{ marginBottom: '1rem', border: '1px solid #333', padding: '0.75rem', borderRadius: '4px' }}>
+        <label style={{ color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={overrideGreeting}
+            onChange={(e) => {
+              setOverrideGreeting(e.target.checked);
+              // Set a baseline fallback when turned on
+              if (e.target.checked) setSelectedGreeting(lang === 'fi' ? 'Moi' : lang === 'no' ? 'Hei' : 'Hi');
+            }}
+          />
+          {lang === 'fi' ? 'Valitse aloitus itse' : lang === 'no' ? 'Velg hilsen manuelt' : 'Manually select greeting'}
+        </label>
+
+        {overrideGreeting && (
+          <select
+            value={selectedGreeting}
+            onChange={(e) => setSelectedGreeting(e.target.value)}
+            style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white', border: '1px solid #444' }}
+          >
+            {lang === 'fi' && (
+              <>
+                <option value="Moi">Moi</option>
+                <option value="Moro">Moro</option>
+                <option value="Hei">Hei</option>
+              </>
+            )}
+            {lang === 'en' && (
+              <>
+                <option value="Hi">Hi</option>
+                <option value="Hey">Hey</option>
+              </>
+            )}
+            {lang === 'no' && (
+              <>
+                <option value="Hei">Hei</option>
+                <option value="Heisann">Heisann</option>
+              </>
+            )}
+          </select>
+        )}
+      </div>
+
+      {/* Manual Signoff Selection */}
+      <div style={{ marginBottom: '0.5rem', border: '1px solid #333', padding: '0.75rem', borderRadius: '4px' }}>
+        <label style={{ color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={overrideSignoff}
+            onChange={(e) => {
+              setOverrideSignoff(e.target.checked);
+              if (e.target.checked) setSelectedSignoff(lang === 'fi' ? 'Ystävällisin terveisin,' : lang === 'no' ? 'Med vennlig hilsen,' : 'Best regards,');
+            }}
+          />
+          {lang === 'fi' ? 'Valitse lopputervehdys itse' : lang === 'no' ? 'Velg avslutning manuelt' : 'Manually select signoff'}
+        </label>
+
+        {overrideSignoff && (
+          <select
+            value={selectedSignoff}
+            onChange={(e) => setSelectedSignoff(e.target.value)}
+            style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white', border: '1px solid #444' }}
+          >
+            {lang === 'fi' && <option value="Ystävällisin terveisin,">Ystävällisin terveisin,</option>}
+            {lang === 'en' && <option value="Best regards,">Best regards,</option>}
+            {lang === 'no' && <option value="Med vennlig hilsen,">Med vennlig hilsen,</option>}
+          </select>
+        )}
       </div>
 
       {/* Generate Button */}
