@@ -107,7 +107,11 @@ export const BonusDenialGenerator: React.FC<LocalProps> = ({ setMsg }) => {
         <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem', color: 'gold' }}>
           {lang === 'fi' ? 'Valitse kieli:' : 'Select Language:'}
         </label>
-        <select value={lang} onChange={(e) => setLang(e.target.value as Language)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white' }}>
+        <select value={lang} onChange={(e) => {
+          setLang(e.target.value as Language);
+          setOverrideGreeting(false);
+          setOverrideSignoff(false);
+          }} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'black', color: 'white' }}>
           <option value="fi">Finnish</option>
           <option value="en">English</option>
           <option value="no">Norwegian</option>
