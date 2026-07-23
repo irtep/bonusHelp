@@ -54,6 +54,14 @@ const Header: React.FC<HeaderProps> = ({ setMode, msg }): React.ReactElement => 
 		  >
 			show all generators
 		  </button>
+
+		  <button
+			style={{ margin: 5, background: 'crimson' }}
+			onClick={() => { setMode("reportSummary") }}
+		  >
+			REPORT SUMMARY
+		  </button>
+
         </div>
         <WorldClock/>
 		<div>
