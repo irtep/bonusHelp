@@ -106,9 +106,12 @@ function buildFullSummaryText(row: RowSummary): string {
 
 function buildShortSummaryText(row: RowSummary): string {
   return [
-    `${row.interval || "Untitled interval"} — Short summary`,
     `Deposits: €${fmtMoney(row.depositAmt)} / #${row.depositCount}`,
     `NGR: €${fmtMoney(row.totalNgr)}`,
+    `(Casino NGR: €${fmtMoney(row.casinoNgr)} / Sportsbook NGR: €${fmtMoney(row.sbNgr)})`,
+    `(Casino Bets: ${fmtMoney(row.casinoBets)}. Casino Wins: ${fmtMoney(row.casinoWins)} )`,
+    `(Sports Bets: ${fmtMoney(row.sbBets)}. Sports Wins: ${fmtMoney(row.sbWins)} )`,
+    `(Bonuses offered: ${fmtMoney(row.bonusOffered)}. Bonuses dropped: ${fmtMoney(row.bonusDropped)})`,
     `FTD: #${row.ftd}`,
     `UDC: #${row.udc}`,
   ].join("\n");
