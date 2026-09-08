@@ -347,7 +347,7 @@ const ShortSummaryCard: React.FC<{ row: RowSummary }> = ({ row }) => (
       <CopyButton text={buildShortSummaryText(row)} label="Copy short summary" />
     </div>
 
-    <Row label="Deposits" value={`$${fmtMoney(row.depositAmt)} / ${row.depositCount}`} />
+    <Row label="Deposits" value={`$${fmtMoney(row.depositAmt)} / ${row.depositCount}. (withdrawals: ${row.payoutAmt})`} />
     <Row label="NGR" value={`$${fmtMoney(row.totalNgr)}`} />
     <Row label="FTD" value={`${row.ftd}`} />
     <Row label="UDC" value={`${row.udc}`} />
