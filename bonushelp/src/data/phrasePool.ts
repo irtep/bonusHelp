@@ -42,11 +42,8 @@ export const phrasePool: Record<Language, PhrasePool> = {
     greetings: [
       'Moi',
       'Hei',
-      'Tervehdys',
       'Moro',
       'Moi',
-      'Heippa',
-      'Hyvää päivää'
     ],
     openings: [
       'Kiitos kun otit yhteyttä.',
@@ -61,8 +58,8 @@ export const phrasePool: Record<Language, PhrasePool> = {
       'Tarkistin pelitilisi, mutta valitettavasti tällä hetkellä emme voi tarjota bonusta.',
       'Tarkistin pelitilin tilanteen, mutta tällä hetkellä valitettavasti ei ole tilaa bonukselle. Mutta kiitos silti kun otit yhteyttä.',
       'Kävin läpi pelitilisi tiedot, mutta valitettavasti emme voi lisätä sinulle bonusta juuri nyt.',
-      'Katsoin pelitilisi, mutta valitettavasti tällä kertaa minulla ei ole mahdollisuutta antaa sinulle ekstraa.',
-      'Tarkistin bonustilanteesi, mutta valitettavasti tällä hetkellä tilille ei mahdu bonusta.',
+      'Katsoin pelitilisi, mutta valitettavasti tällä kertaa minulla ei ole mahdollisuutta antaa sinulle bonusta tai kierroksia.',
+      'Tarkistin bonustilanteesi, mutta valitettavasti tällä hetkellä tilille ei mahdu lisää.',
       'Tutkin tilanteen, mutta valitettavasti tällä hetkellä emme pysty tarjoamaan sinulle uutta bonusta.',
       'Katsoin mahdollisuudet läpi, mutta valitettavasti tällä erää bonushanaa en saanut auki.'
     ],
@@ -97,7 +94,7 @@ export const phrasePool: Record<Language, PhrasePool> = {
       'I hope you are doing well.',
       'Great to hear from you today.',
       'Thank you for contacting our team.',
-      'I hope you are having a wonderful week.',
+      'I hope you are having a good week.',
       'Thank you for getting in touch with us.',
       'I hope your day is going great so far.'
     ],
@@ -504,8 +501,7 @@ export const phrasePoolGranted: Record<Language, PhrasePoolGranted> = {
     openings: [
       'Kiitos kun otit yhteyttä.',
       'Toivottavasti sinulle kuuluu hyvää.',
-      'Mukava kuulla sinusta pitkästä aikaa.',
-      'Kiitos viestistäsi ja pyynnöstäsi.',
+      'Kiitos viestistäsi.',
       'Mukava kun laitoit meille viestiä.',
       'Toivottavasti päiväsi on sujunut hienosti.'
     ],
