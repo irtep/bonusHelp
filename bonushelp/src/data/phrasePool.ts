@@ -104,7 +104,7 @@ export const phrasePool: Record<Language, PhrasePool> = {
       `I went through your account details, but unfortunately, couldn't add a bonus for you at this time.`,
       'I took a close look at your account, but unfortunately, there is no room for a bonus at this time.',
       'I have checked the bonus availability, but unfortunately, your account is not eligible for a new offer at this time.',
-      'I investigated the possibilities for you, but unfortunately, we cannot provide a bonus right now.',
+      'I investigated the situation for you, but unfortunately, we cannot provide a bonus right now.',
       'I checked everything thoroughly, but unfortunately, I cannot reward you with a bonus on this occasion.'
     ],
     closings: [
