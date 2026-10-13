@@ -354,6 +354,366 @@ const ShortSummaryCard: React.FC<{ row: RowSummary }> = ({ row }) => (
   </div>
 );
 
+/* ===================================================================
+ * NEW: Multi-day comparison
+ * Compares the latest day with the previous day and with the average
+ * of all earlier days in the paste. The "Total" row is ignored.
+ * =================================================================== */
+
+const CURRENCY = "€";
+
+type MetricKind = "money" | "count" | "ratio";
+
+interface MetricDef {
+  key: keyof RowSummary;
+  label: string;
+  kind: MetricKind;
+  // true = going up is good, false = going up is bad, null = neutral
+  higherIsBetter: boolean | null;
+}
+
+const COMPARE_SECTIONS: { title: string; metrics: MetricDef[] }[] = [
+  {
+    title: "Traffic & Acquisition",
+    metrics: [
+      { key: "signUps", label: "Sign-Ups", kind: "count", higherIsBetter: true },
+      { key: "ftd", label: "FTDs", kind: "count", higherIsBetter: true },
+      { key: "udc", label: "UDC", kind: "count", higherIsBetter: true },
+    ],
+  },
+  {
+    title: "Deposits",
+    metrics: [
+      { key: "depAttAmt", label: "Deposit attempts $", kind: "money", higherIsBetter: true },
+      { key: "depAttCount", label: "Deposit attempts #", kind: "count", higherIsBetter: true },
+      { key: "depositAmt", label: "Deposits $", kind: "money", higherIsBetter: true },
+      { key: "depositCount", label: "Deposits #", kind: "count", higherIsBetter: true },
+      { key: "depSuccessRatioAmt", label: "Deposit success ratio $", kind: "ratio", higherIsBetter: true },
+      { key: "depSuccessRatioCount", label: "Deposit success ratio #", kind: "ratio", higherIsBetter: true },
+    ],
+  },
+  {
+    title: "Withdrawals",
+    metrics: [
+      { key: "payoutAmt", label: "Payouts $", kind: "money", higherIsBetter: false },
+      { key: "payoutCount", label: "Payouts #", kind: "count", higherIsBetter: false },
+    ],
+  },
+  {
+    title: "Bonuses",
+    metrics: [
+      { key: "bonusOffered", label: "Bonus offered", kind: "money", higherIsBetter: false },
+      { key: "bonusDropped", label: "Bonus dropped", kind: "money", higherIsBetter: true },
+    ],
+  },
+  {
+    title: "Casino",
+    metrics: [
+      { key: "casinoBets", label: "Casino bets", kind: "money", higherIsBetter: true },
+      { key: "casinoWins", label: "Casino wins", kind: "money", higherIsBetter: false },
+    ],
+  },
+  {
+    title: "Sportsbook",
+    metrics: [
+      { key: "sbBets", label: "SB bets", kind: "money", higherIsBetter: true },
+      { key: "sbWins", label: "SB wins", kind: "money", higherIsBetter: false },
+    ],
+  },
+  {
+    title: "NGR",
+    metrics: [
+      { key: "casinoNgr", label: "Casino NGR", kind: "money", higherIsBetter: true },
+      { key: "sbNgr", label: "Sportsbook NGR", kind: "money", higherIsBetter: true },
+      { key: "totalNgr", label: "Total NGR", kind: "money", higherIsBetter: true },
+    ],
+  },
+];
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Drops the Total row and returns days sorted newest first. */
+function getDailyRows(rows: RowSummary[]): RowSummary[] {
+  const days = rows.filter((r) => r.interval.trim().toLowerCase() !== "total");
+  const allDates = days.length > 0 && days.every((r) => ISO_DATE.test(r.interval.trim()));
+  if (allDates) {
+    return [...days].sort((a, b) => b.interval.localeCompare(a.interval));
+  }
+  // Not plain dates: trust the pasted order (newest first, as the report exports it).
+  return days;
+}
+
+function averageRow(rows: RowSummary[]): Record<string, number> {
+  const avg: Record<string, number> = {};
+  for (const section of COMPARE_SECTIONS) {
+    for (const m of section.metrics) {
+      const sum = rows.reduce((acc, r) => acc + (r[m.key] as number), 0);
+      avg[m.key] = rows.length ? sum / rows.length : 0;
+    }
+  }
+  return avg;
+}
+
+function fmtValue(n: number, kind: MetricKind): string {
+  if (kind === "money") return `${CURRENCY}${fmtMoney(n)}`;
+  if (kind === "ratio") return n.toFixed(2);
+  // counts: whole numbers stay whole, averages get one decimal
+  return Number.isInteger(n) ? `${n}` : n.toFixed(1);
+}
+
+function fmtDelta(diff: number, kind: MetricKind): string {
+  const sign = diff > 0 ? "+" : diff < 0 ? "−" : "±";
+  const abs = Math.abs(diff);
+  if (kind === "money") return `${sign}${CURRENCY}${fmtMoney(abs)}`;
+  if (kind === "ratio") return `${sign}${abs.toFixed(2)}`;
+  return `${sign}${Number.isInteger(abs) ? abs : abs.toFixed(1)}`;
+}
+
+function pctChange(current: number, reference: number): number | null {
+  if (reference === 0) return null;
+  // Use |reference| so a negative baseline (e.g. negative NGR) still gives a sensible direction.
+  return ((current - reference) / Math.abs(reference)) * 100;
+}
+
+function fmtPct(p: number | null): string {
+  if (p === null) return "n/a";
+  const sign = p > 0 ? "+" : p < 0 ? "−" : "±";
+  return `${sign}${Math.abs(p).toFixed(1)}%`;
+}
+
+function deltaColor(diff: number, higherIsBetter: boolean | null): string {
+  if (diff === 0 || higherIsBetter === null) return "#6b7280";
+  const good = higherIsBetter ? diff > 0 : diff < 0;
+  return good ? "#047857" : "#b91c1c";
+}
+
+interface ComparisonData {
+  latest: RowSummary;
+  previous: RowSummary | null;
+  earlier: RowSummary[];
+  avg: Record<string, number>;
+  sections: { title: string; metrics: MetricDef[] }[];
+}
+
+function buildComparison(raw: string): ComparisonData | null {
+  const days = getDailyRows(parseReport(raw));
+  if (days.length < 2) return null;
+
+  const [latest, ...earlier] = days;
+  const previous = earlier[0] ?? null;
+  const avg = averageRow(earlier);
+
+  // Hide metrics that are zero on every day (e.g. sportsbook when there's no SB traffic).
+  const sections = COMPARE_SECTIONS
+    .map((s) => ({
+      title: s.title,
+      metrics: s.metrics.filter((m) => days.some((d) => (d[m.key] as number) !== 0)),
+    }))
+    .filter((s) => s.metrics.length > 0);
+
+  return { latest, previous, earlier, avg, sections };
+}
+
+function buildComparisonText(c: ComparisonData): string {
+  const first = c.earlier[c.earlier.length - 1].interval;
+  const last = c.earlier[0].interval;
+  const lines: string[] = [
+    `${c.latest.interval} vs previous day (${c.previous?.interval}) and ${c.earlier.length}-day average (${first} – ${last})`,
+  ];
+  for (const s of c.sections) {
+    lines.push("", s.title);
+    for (const m of s.metrics) {
+      const cur = c.latest[m.key] as number;
+      const prev = c.previous ? (c.previous[m.key] as number) : 0;
+      const avg = c.avg[m.key];
+      lines.push(
+        `${m.label}: ${fmtValue(cur, m.kind)} | vs prev day: ${fmtDelta(cur - prev, m.kind)} (${fmtPct(pctChange(cur, prev))}) | vs avg: ${fmtDelta(cur - avg, m.kind)} (${fmtPct(pctChange(cur, avg))})`
+      );
+    }
+  }
+  return lines.join("\n");
+}
+
+const DeltaCell: React.FC<{
+  current: number;
+  reference: number;
+  kind: MetricKind;
+  higherIsBetter: boolean | null;
+  referenceLabel: string;
+}> = ({ current, reference, kind, higherIsBetter, referenceLabel }) => {
+  const diff = current - reference;
+  const color = deltaColor(diff, higherIsBetter);
+  return (
+    <td style={{ padding: "6px 0 6px 12px", textAlign: "right", verticalAlign: "top" }}>
+      <div style={{ fontWeight: 600, color, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+        {fmtPct(pctChange(current, reference))}
+      </div>
+      <div style={{ fontSize: 12, color, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+        {fmtDelta(diff, kind)}
+      </div>
+      <div style={{ fontSize: 11, color: "#9ca3af", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+        {referenceLabel} {fmtValue(reference, kind)}
+      </div>
+    </td>
+  );
+};
+
+const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
+  const { latest, previous, earlier, avg, sections } = data;
+  const isToday = latest.interval.trim() === todayIso();
+
+  return (
+    <div style={{
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "16px 20px",
+      marginBottom: 20,
+      background: "#fff",
+      fontFamily: "system-ui, -apple-system, sans-serif",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
+          {latest.interval} compared
+        </div>
+        <CopyButton text={buildComparisonText(data)} label="Copy comparison" />
+      </div>
+      <div style={{ fontSize: 12, color: "#6b7280" }}>
+        Previous day: {previous?.interval} · Average of {earlier.length} earlier day{earlier.length === 1 ? "" : "s"}
+        {" "}({earlier[earlier.length - 1].interval} – {earlier[0].interval})
+      </div>
+
+      {isToday && (
+        <div style={{
+          marginTop: 10,
+          padding: "8px 10px",
+          fontSize: 12,
+          color: "#92400e",
+          background: "#fffbeb",
+          border: "1px solid #fde68a",
+          borderRadius: 8,
+        }}>
+          {latest.interval} is today, so its numbers are still growing. Expect it to look low against full days.
+        </div>
+      )}
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 8 }}>
+          <thead>
+            <tr style={{ fontSize: 12, color: "#6b7280", textAlign: "right" }}>
+              <th style={{ textAlign: "left", fontWeight: 600, padding: "8px 0" }}>Metric</th>
+              <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>Latest</th>
+              <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>vs prev day</th>
+              <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>vs average</th>
+            </tr>
+          </thead>
+          {sections.map((s) => (
+            <tbody key={s.title}>
+              <tr>
+                <td colSpan={4} style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "#6b7280",
+                  padding: "16px 0 4px",
+                }}>
+                  {s.title}
+                </td>
+              </tr>
+              {s.metrics.map((m) => {
+                const cur = latest[m.key] as number;
+                return (
+                  <tr key={m.key} style={{ borderBottom: "1px solid #eee" }}>
+                    <td style={{ padding: "6px 0", color: "#374151", verticalAlign: "top" }}>{m.label}</td>
+                    <td style={{
+                      padding: "6px 0 6px 12px",
+                      textAlign: "right",
+                      fontWeight: 600,
+                      color: "#111827",
+                      fontVariantNumeric: "tabular-nums",
+                      verticalAlign: "top",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {fmtValue(cur, m.kind)}
+                    </td>
+                    <DeltaCell
+                      current={cur}
+                      reference={previous ? (previous[m.key] as number) : 0}
+                      kind={m.kind}
+                      higherIsBetter={m.higherIsBetter}
+                      referenceLabel="was"
+                    />
+                    <DeltaCell
+                      current={cur}
+                      reference={avg[m.key]}
+                      kind={m.kind}
+                      higherIsBetter={m.higherIsBetter}
+                      referenceLabel="avg"
+                    />
+                  </tr>
+                );
+              })}
+            </tbody>
+          ))}
+        </table>
+      </div>
+
+      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 10 }}>
+        Green means better for the business, red means worse (e.g. higher payouts or casino wins show red).
+        The Total row is ignored; the average excludes the latest day.
+      </div>
+    </div>
+  );
+};
+
+const ComparisonSection: React.FC = () => {
+  const [raw, setRaw] = useState("");
+  const data = useMemo(() => buildComparison(raw), [raw]);
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "#111827" }}>
+        Compare days
+      </h2>
+      <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 12 }}>
+        Paste a report with several days (header row + one row per day). The latest day is compared
+        with the day before and with the average of the earlier days.
+      </p>
+      <textarea
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        placeholder="Paste multi-day report data here..."
+        rows={8}
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          fontFamily: "monospace",
+          fontSize: 12,
+          padding: 10,
+          border: "1px solid #d1d5db",
+          borderRadius: 8,
+          resize: "vertical",
+        }}
+      />
+
+      {raw.trim().length > 0 && !data && (
+        <p style={{ color: "#b91c1c", fontSize: 13, marginTop: 12 }}>
+          Need at least two day rows to compare. Paste the header row plus two or more days, tab-separated.
+        </p>
+      )}
+
+      <div style={{ marginTop: 20 }}>
+        {data && <ComparisonCard data={data} />}
+      </div>
+    </div>
+  );
+};
+
 const ReportSummary: React.FC = () => {
   const [raw, setRaw] = useState("");
 
@@ -398,6 +758,8 @@ const ReportSummary: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <ComparisonSection />
     </div>
   );
 };
