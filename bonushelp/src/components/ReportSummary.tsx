@@ -372,60 +372,16 @@ interface MetricDef {
   higherIsBetter: boolean | null;
 }
 
+// Leave title empty to show the metrics without a section heading.
 const COMPARE_SECTIONS: { title: string; metrics: MetricDef[] }[] = [
   {
-    title: "Traffic & Acquisition",
+    title: "",
     metrics: [
-      { key: "signUps", label: "Sign-Ups", kind: "count", higherIsBetter: true },
-      { key: "ftd", label: "FTDs", kind: "count", higherIsBetter: true },
+      { key: "depositAmt", label: "Deposits", kind: "money", higherIsBetter: true },
+      { key: "payoutAmt", label: "Withdrawals", kind: "money", higherIsBetter: false },
+      { key: "totalNgr", label: "NGR", kind: "money", higherIsBetter: true },
+      { key: "ftd", label: "FTD", kind: "count", higherIsBetter: true },
       { key: "udc", label: "UDC", kind: "count", higherIsBetter: true },
-    ],
-  },
-  {
-    title: "Deposits",
-    metrics: [
-      { key: "depAttAmt", label: "Deposit attempts $", kind: "money", higherIsBetter: true },
-      { key: "depAttCount", label: "Deposit attempts #", kind: "count", higherIsBetter: true },
-      { key: "depositAmt", label: "Deposits $", kind: "money", higherIsBetter: true },
-      { key: "depositCount", label: "Deposits #", kind: "count", higherIsBetter: true },
-      { key: "depSuccessRatioAmt", label: "Deposit success ratio $", kind: "ratio", higherIsBetter: true },
-      { key: "depSuccessRatioCount", label: "Deposit success ratio #", kind: "ratio", higherIsBetter: true },
-    ],
-  },
-  {
-    title: "Withdrawals",
-    metrics: [
-      { key: "payoutAmt", label: "Payouts $", kind: "money", higherIsBetter: false },
-      { key: "payoutCount", label: "Payouts #", kind: "count", higherIsBetter: false },
-    ],
-  },
-  {
-    title: "Bonuses",
-    metrics: [
-      { key: "bonusOffered", label: "Bonus offered", kind: "money", higherIsBetter: false },
-      { key: "bonusDropped", label: "Bonus dropped", kind: "money", higherIsBetter: true },
-    ],
-  },
-  {
-    title: "Casino",
-    metrics: [
-      { key: "casinoBets", label: "Casino bets", kind: "money", higherIsBetter: true },
-      { key: "casinoWins", label: "Casino wins", kind: "money", higherIsBetter: false },
-    ],
-  },
-  {
-    title: "Sportsbook",
-    metrics: [
-      { key: "sbBets", label: "SB bets", kind: "money", higherIsBetter: true },
-      { key: "sbWins", label: "SB wins", kind: "money", higherIsBetter: false },
-    ],
-  },
-  {
-    title: "NGR",
-    metrics: [
-      { key: "casinoNgr", label: "Casino NGR", kind: "money", higherIsBetter: true },
-      { key: "sbNgr", label: "Sportsbook NGR", kind: "money", higherIsBetter: true },
-      { key: "totalNgr", label: "Total NGR", kind: "money", higherIsBetter: true },
     ],
   },
 ];
@@ -526,7 +482,8 @@ function buildComparisonText(c: ComparisonData): string {
     `${c.latest.interval} vs previous day (${c.previous?.interval}) and ${c.earlier.length}-day average (${first} – ${last})`,
   ];
   for (const s of c.sections) {
-    lines.push("", s.title);
+    lines.push("");
+    if (s.title) lines.push(s.title);
     for (const m of s.metrics) {
       const cur = c.latest[m.key] as number;
       const prev = c.previous ? (c.previous[m.key] as number) : 0;
@@ -612,8 +569,8 @@ const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
             </tr>
           </thead>
           {sections.map((s) => (
-            <tbody key={s.title}>
-              <tr>
+            <tbody key={s.title || "metrics"}>
+              {s.title && <tr>
                 <td colSpan={4} style={{
                   fontSize: 13,
                   fontWeight: 600,
@@ -624,7 +581,7 @@ const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
                 }}>
                   {s.title}
                 </td>
-              </tr>
+              </tr>}
               {s.metrics.map((m) => {
                 const cur = latest[m.key] as number;
                 return (
