@@ -393,6 +393,16 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Weekday index (0 = Sunday) for a YYYY-MM-DD string, or null if it isn't a date. */
+function weekdayOf(interval: string): number | null {
+  const s = interval.trim();
+  if (!ISO_DATE.test(s)) return null;
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
 /** Drops the Total row and returns days sorted newest first. */
 function getDailyRows(rows: RowSummary[]): RowSummary[] {
   const days = rows.filter((r) => r.interval.trim().toLowerCase() !== "total");
@@ -454,6 +464,9 @@ interface ComparisonData {
   earlier: RowSummary[];
   avg: Record<string, number>;
   sections: { title: string; metrics: MetricDef[] }[];
+  weekdayName: string | null;
+  // Earlier days that fall on the same weekday as the latest day (newest first), or null if none.
+  sameWeekday: { days: RowSummary[]; avg: Record<string, number> } | null;
 }
 
 function buildComparison(raw: string): ComparisonData | null {
@@ -464,6 +477,13 @@ function buildComparison(raw: string): ComparisonData | null {
   const previous = earlier[0] ?? null;
   const avg = averageRow(earlier);
 
+  const latestWeekday = weekdayOf(latest.interval);
+  const weekdayName = latestWeekday !== null ? WEEKDAY_NAMES[latestWeekday] : null;
+  const sameDays = latestWeekday !== null
+    ? earlier.filter((r) => weekdayOf(r.interval) === latestWeekday)
+    : [];
+  const sameWeekday = sameDays.length > 0 ? { days: sameDays, avg: averageRow(sameDays) } : null;
+
   // Hide metrics that are zero on every day (e.g. sportsbook when there's no SB traffic).
   const sections = COMPARE_SECTIONS
     .map((s) => ({
@@ -472,15 +492,27 @@ function buildComparison(raw: string): ComparisonData | null {
     }))
     .filter((s) => s.metrics.length > 0);
 
-  return { latest, previous, earlier, avg, sections };
+  return { latest, previous, earlier, avg, sections, weekdayName, sameWeekday };
+}
+
+/** Column header / text label for the same-weekday comparison. */
+function sameWeekdayLabel(c: ComparisonData): string {
+  if (!c.sameWeekday || !c.weekdayName) return "";
+  const n = c.sameWeekday.days.length;
+  return n === 1 ? `vs last ${c.weekdayName}` : `vs ${c.weekdayName} avg (${n})`;
 }
 
 function buildComparisonText(c: ComparisonData): string {
   const first = c.earlier[c.earlier.length - 1].interval;
   const last = c.earlier[0].interval;
+  const wdLabel = sameWeekdayLabel(c);
+  const wdDates = c.sameWeekday ? c.sameWeekday.days.map((d) => d.interval).join(", ") : "";
   const lines: string[] = [
-    `${c.latest.interval} vs previous day (${c.previous?.interval}) and ${c.earlier.length}-day average (${first} – ${last})`,
+    `${c.latest.interval}${c.weekdayName ? ` (${c.weekdayName})` : ""} vs previous day (${c.previous?.interval}) and ${c.earlier.length}-day average (${first} – ${last})`,
   ];
+  if (c.sameWeekday) {
+    lines.push(`Same weekday: ${wdDates}`);
+  }
   for (const s of c.sections) {
     lines.push("");
     if (s.title) lines.push(s.title);
@@ -488,9 +520,13 @@ function buildComparisonText(c: ComparisonData): string {
       const cur = c.latest[m.key] as number;
       const prev = c.previous ? (c.previous[m.key] as number) : 0;
       const avg = c.avg[m.key];
-      lines.push(
-        `${m.label}: ${fmtValue(cur, m.kind)} | vs prev day: ${fmtDelta(cur - prev, m.kind)} (${fmtPct(pctChange(cur, prev))}) | vs avg: ${fmtDelta(cur - avg, m.kind)} (${fmtPct(pctChange(cur, avg))})`
-      );
+      let line =
+        `${m.label}: ${fmtValue(cur, m.kind)} | vs prev day: ${fmtDelta(cur - prev, m.kind)} (${fmtPct(pctChange(cur, prev))}) | vs avg: ${fmtDelta(cur - avg, m.kind)} (${fmtPct(pctChange(cur, avg))})`;
+      if (c.sameWeekday) {
+        const wd = c.sameWeekday.avg[m.key];
+        line += ` | ${wdLabel}: ${fmtDelta(cur - wd, m.kind)} (${fmtPct(pctChange(cur, wd))})`;
+      }
+      lines.push(line);
     }
   }
   return lines.join("\n");
@@ -521,8 +557,10 @@ const DeltaCell: React.FC<{
 };
 
 const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
-  const { latest, previous, earlier, avg, sections } = data;
+  const { latest, previous, earlier, avg, sections, weekdayName, sameWeekday } = data;
   const isToday = latest.interval.trim() === todayIso();
+  const wdLabel = sameWeekdayLabel(data);
+  const colCount = sameWeekday ? 5 : 4;
 
   return (
     <div style={{
@@ -535,13 +573,20 @@ const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-          {latest.interval} compared
+          {latest.interval}{weekdayName ? ` (${weekdayName})` : ""} compared
         </div>
         <CopyButton text={buildComparisonText(data)} label="Copy comparison" />
       </div>
       <div style={{ fontSize: 12, color: "#6b7280" }}>
         Previous day: {previous?.interval} · Average of {earlier.length} earlier day{earlier.length === 1 ? "" : "s"}
         {" "}({earlier[earlier.length - 1].interval} – {earlier[0].interval})
+      </div>
+      <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+        {sameWeekday
+          ? `Same weekday: ${sameWeekday.days.map((d) => d.interval).join(", ")}`
+          : weekdayName
+            ? `No earlier ${weekdayName} in the data. Paste at least 8 days to compare with the same weekday.`
+            : "Weekday comparison needs dates in YYYY-MM-DD format."}
       </div>
 
       {isToday && (
@@ -566,12 +611,15 @@ const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
               <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>Latest</th>
               <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>vs prev day</th>
               <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>vs average</th>
+              {sameWeekday && (
+                <th style={{ fontWeight: 600, padding: "8px 0 8px 12px" }}>{wdLabel}</th>
+              )}
             </tr>
           </thead>
           {sections.map((s) => (
             <tbody key={s.title || "metrics"}>
               {s.title && <tr>
-                <td colSpan={4} style={{
+                <td colSpan={colCount} style={{
                   fontSize: 13,
                   fontWeight: 600,
                   textTransform: "uppercase",
@@ -612,6 +660,15 @@ const ComparisonCard: React.FC<{ data: ComparisonData }> = ({ data }) => {
                       higherIsBetter={m.higherIsBetter}
                       referenceLabel="avg"
                     />
+                    {sameWeekday && (
+                      <DeltaCell
+                        current={cur}
+                        reference={sameWeekday.avg[m.key]}
+                        kind={m.kind}
+                        higherIsBetter={m.higherIsBetter}
+                        referenceLabel={sameWeekday.days.length === 1 ? "was" : "avg"}
+                      />
+                    )}
                   </tr>
                 );
               })}
